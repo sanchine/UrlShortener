@@ -4,48 +4,58 @@
     ViewData["Title"] = "Url Shortener";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Simplify your links</h1>
-    <form asp-action="ShortenUrl" asp-controller="Home" method="post">
-        <input asp-for="NewUrl" type="text" class="form-control" required>
-        <button type="submit" class="button">SHORTEN URL</button>
+<div class="container">
+    <div class="border border-success p-4 rounded mb-4">
+        <h2 class="text-black mb-3">Simplify your links</h2>
+        <form class="input-group mb-2" asp-action="ShortenUrl" asp-controller="Home" method="post">
+            <input asp-for="NewUrl" type="text" class="form-control" required>
+            <div class="input-group-append">
+                <button class="btn btn-success" type="submit" id="shortenButton">SHORTEN URL</button>
+            </div>
+        </form>
         @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
-            <br><span class="text-danger">@Model.ErrorMessage</span>
+            <b><span class="text-danger">Error: @Model.ErrorMessage</span>
+            <a href="@Url.Action("RedirectByShortenUrl", "Home", new { ShortUrl = @Model.ExistedUrl })">@Model.ExistedUrl</a>
+            </b>
         }
-    </form>
+        <p class="text-black">All do.main URLs and click analytics are public and can be accessed by anyone</p>
+    </div>
+
+    @if (Model != null && Model.Urls != null)
+    {
+        <div class="row">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <td>Original Url</td>
+                            <td>Short Url</td>
+                            <td>Created</td>
+                            <td>All Clicks</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var item in Model.Urls) {
+                            <tr name="@item.LongUrl">
+                                <td>
+                                    <a href="@item.LongUrl">@item.LongUrl.Substring(0, Math.Min(20, @item.LongUrl.Length)) ...</a>
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("RedirectByShortenUrl", "Home", new { ShortUrl = @item.ShortUrl })">@item.ShortUrl</a>
+                                </td>
+                                <td>@item.Created</td>
+                                <td>@item.ClicksCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 </div>
 
 <br>
 
-@if (Model != null && Model.Urls != null)
-{
-    <div class="row">
-        <div class="col-md-12">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <td>Original Url</td>
-                        <td>Short Url</td>
-                        <td>Created</td>
-                        <td>All Clicks</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach(var item in Model.Urls) {
-                        <tr>
-                            <td>
-                                <a href="@item.LongUrl">@item.LongUrl.Substring(0, Math.Min(20, @item.LongUrl.Length)) ...</a>
-                            </td>
-                            <td>
-                                <a href="@Url.Action("RedirectByShortenUrl", "Home", new { ShortUrl = @item.ShortUrl })">@item.ShortUrl</a>
-                            </td>
-                            <td>@item.Created</td>
-                            <td>@item.ClicksCount</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-}
+
+

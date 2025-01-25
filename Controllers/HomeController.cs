@@ -6,6 +6,7 @@ using UrlShortener.Models;
 
 namespace UrlShortener.Controllers;
 
+[Authorize]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -17,19 +18,17 @@ public class HomeController : Controller
         _db = db;
     }
 
-    public IActionResult Index()
+    [HttpGet]
+    public IActionResult Index(UrlMapViewModel viewModel)
     {
         var urls = _db.UrlMaps.OrderByDescending(u => u.Created).ToList();
-        var viewModel = new UrlMapViewModel
-        {
-            Urls = urls,
-            ErrorMessage = string.Empty,
-            NewUrl = string.Empty
-        };
+
+        viewModel.Urls = urls;
+
+        
         return View(viewModel);
     }
 
-    [Authorize]
     public IActionResult RedirectByShortenUrl(string ShortUrl)
     {
         var targetUrl = _db.UrlMaps.FirstOrDefault(item => item.ShortUrl == ShortUrl);
@@ -40,7 +39,6 @@ public class HomeController : Controller
         return Redirect(targetUrl.LongUrl);
     }
 
-    [Authorize]
     [HttpPost]
     public IActionResult ShortenUrl(UrlMapViewModel viewModel)
     {
@@ -50,15 +48,17 @@ public class HomeController : Controller
         if (!isUrlValid)
         {
             viewModel.ErrorMessage = "URL is not valid";
-            return View("Index", viewModel);
+            return RedirectToAction("Index", viewModel);
         }
 
         var isUrlExists = _db.UrlMaps.Any(item => item.LongUrl == viewModel.NewUrl);
 
         if (isUrlExists)
         {
-            viewModel.ErrorMessage = "URL is already exists";
-            return View("Index", viewModel);
+            var existedShortUrl = _db.UrlMaps.FirstOrDefault(item => item.LongUrl == viewModel.NewUrl);
+            viewModel.ErrorMessage = "URL is already exists: ";
+            viewModel.ExistedUrl = existedShortUrl.ShortUrl;
+            return RedirectToAction("Index", viewModel);
         }
 
         var shortUrl = string.Empty;
@@ -84,7 +84,7 @@ public class HomeController : Controller
         _db.UrlMaps.Add(url);
         _db.SaveChanges();
 
-        return View("Index", viewModel);
+        return RedirectToAction("Index", viewModel);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
