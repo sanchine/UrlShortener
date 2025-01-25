@@ -20,9 +20,10 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         var urls = _db.UrlMaps.OrderByDescending(u => u.Created).ToList();
-        var viewModel = new ShortenedUrlViewModel
+        var viewModel = new UrlMapViewModel
         {
             Urls = urls,
+            ErrorMessage = string.Empty,
             NewUrl = string.Empty
         };
         return View(viewModel);
@@ -41,40 +42,30 @@ public class HomeController : Controller
 
     [Authorize]
     [HttpPost]
-    public IActionResult ShortenUrl(string NewUrl)
+    public IActionResult ShortenUrl(UrlMapViewModel viewModel)
     {
-
-        // TODO: validate url by regex and handle errors
         Uri uri;
-        var isUrlValid = Uri.TryCreate(NewUrl, UriKind.Absolute, out uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        var isUrlValid = Uri.TryCreate(viewModel.NewUrl, UriKind.Absolute, out uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 
         if (!isUrlValid)
         {
-            // var viewModel = new ShortenedUrlViewModel
-            // {
-            //     Error = "URL is invalid!"
-            // };
-            // return View(viewModel);
-            return RedirectToAction("Index");
+            viewModel.ErrorMessage = "URL is not valid";
+            return View("Index", viewModel);
         }
 
-        var isUrlExists = _db.UrlMaps.Any(item => item.LongUrl == NewUrl);
+        var isUrlExists = _db.UrlMaps.Any(item => item.LongUrl == viewModel.NewUrl);
 
         if (isUrlExists)
         {
-            // var viewModel = new ShortenedUrlViewModel
-            // {
-            //     Error = "URL is already exists!"
-            // };
-            // return View(viewModel);
-            return RedirectToAction("Index");
+            viewModel.ErrorMessage = "URL is already exists";
+            return View("Index", viewModel);
         }
 
         var shortUrl = string.Empty;
 
         do
         {
-            shortUrl = UrlShortenator.GenerateShortUrl(NewUrl);
+            shortUrl = UrlShortenator.GenerateShortUrl(viewModel.NewUrl);
 
             var isShortUrlExistsInDb = _db.UrlMaps.Any(item => item.ShortUrl == shortUrl);
 
@@ -85,7 +76,7 @@ public class HomeController : Controller
         var url = new UrlMap
         {
             ShortUrl = "do.main/" + shortUrl,
-            LongUrl = NewUrl,
+            LongUrl = viewModel.NewUrl,
             Created = DateTime.UtcNow,
             ClicksCount = 0
         };
@@ -93,7 +84,7 @@ public class HomeController : Controller
         _db.UrlMaps.Add(url);
         _db.SaveChanges();
 
-        return RedirectToAction("Index");
+        return View("Index", viewModel);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

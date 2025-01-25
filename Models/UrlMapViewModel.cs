@@ -1,6 +1,6 @@
 namespace UrlShortener.Models
 {
-    public class ShortenedUrlViewModel
+    public class UrlMapViewModel
     {
         public List<UrlMap> Urls {get; set;}
         public string NewUrl {get; set;} = string.Empty;

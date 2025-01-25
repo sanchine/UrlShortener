@@ -1,8 +1,51 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model UrlMapViewModel
+
+@{
+    ViewData["Title"] = "Url Shortener";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Simplify your links</h1>
+    <form asp-action="ShortenUrl" asp-controller="Home" method="post">
+        <input asp-for="NewUrl" type="text" class="form-control" required>
+        <button type="submit" class="button">SHORTEN URL</button>
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <br><span class="text-danger">@Model.ErrorMessage</span>
+        }
+    </form>
 </div>
+
+<br>
+
+@if (Model != null && Model.Urls != null)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td>Original Url</td>
+                        <td>Short Url</td>
+                        <td>Created</td>
+                        <td>All Clicks</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var item in Model.Urls) {
+                        <tr>
+                            <td>
+                                <a href="@item.LongUrl">@item.LongUrl.Substring(0, Math.Min(20, @item.LongUrl.Length)) ...</a>
+                            </td>
+                            <td>
+                                <a href="@Url.Action("RedirectByShortenUrl", "Home", new { ShortUrl = @item.ShortUrl })">@item.ShortUrl</a>
+                            </td>
+                            <td>@item.Created</td>
+                            <td>@item.ClicksCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
